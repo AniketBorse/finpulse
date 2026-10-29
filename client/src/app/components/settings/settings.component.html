@@ -1,0 +1,188 @@
+<div class="space-y-6">
+  <!-- Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-white">System & Organization Settings</h1>
+      <p class="text-sm text-slate-400 mt-1">
+        Configure reporting currency preferences, organizational profiles, and security governance policies.
+      </p>
+    </div>
+    <div *ngIf="savedMessage()" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
+      {{ savedMessage() }}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left Column: Org Profile & Currency (7 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+      <!-- Organization Profile Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-4">
+        <h2 class="text-sm font-semibold text-white border-b border-slate-800 pb-3 flex items-center space-x-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <span>Organization Entity Details</span>
+        </h2>
+
+        <div class="space-y-4 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Legal Organization Name</label>
+            <input
+              type="text"
+              [ngModel]="orgName()"
+              (ngModelChange)="orgName.set($event)"
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Reporting Currency (Default)</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                (click)="onCurrencyChange('INR')"
+                [ngClass]="currency() === 'INR' ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-500 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'"
+                class="px-3 py-2 rounded-lg border text-xs transition-all flex items-center justify-center space-x-1.5"
+              >
+                <span>₹</span>
+                <span>INR (Rupee)</span>
+              </button>
+              <button
+                type="button"
+                (click)="onCurrencyChange('USD')"
+                [ngClass]="currency() === 'USD' ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-500 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'"
+                class="px-3 py-2 rounded-lg border text-xs transition-all flex items-center justify-center space-x-1.5"
+              >
+                <span>$</span>
+                <span>USD (Dollar)</span>
+              </button>
+              <button
+                type="button"
+                (click)="onCurrencyChange('EUR')"
+                [ngClass]="currency() === 'EUR' ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-500 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'"
+                class="px-3 py-2 rounded-lg border text-xs transition-all flex items-center justify-center space-x-1.5"
+              >
+                <span>€</span>
+                <span>EUR (Euro)</span>
+              </button>
+              <button
+                type="button"
+                (click)="onCurrencyChange('GBP')"
+                [ngClass]="currency() === 'GBP' ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-500 shadow-md' : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'"
+                class="px-3 py-2 rounded-lg border text-xs transition-all flex items-center justify-center space-x-1.5"
+              >
+                <span>£</span>
+                <span>GBP (Pound)</span>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1.5">
+              Live updates all KPI metrics, Chart.js trajectories, wizard forms, and financial tables instantly.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Fiscal Year Calendar</label>
+            <input
+              type="text"
+              [ngModel]="fiscalYearStart()"
+              (ngModelChange)="fiscalYearStart.set($event)"
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div class="pt-2">
+            <button
+              (click)="saveSettings()"
+              class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-colors"
+            >
+              Save Organization Profile
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live RBAC Switcher Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-4">
+        <h2 class="text-sm font-semibold text-white border-b border-slate-800 pb-3 flex items-center space-x-2">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span>Role-Based Access Control (RBAC) Simulator</span>
+        </h2>
+        <p class="text-xs text-slate-400">
+          Switch active user session privileges to test write restrictions and read-only views.
+        </p>
+        <div class="flex items-center space-x-3 text-xs">
+          <button
+            type="button"
+            (click)="toggleRole('ADMIN')"
+            [ngClass]="currentRole() === 'ADMIN' ? 'bg-indigo-500 text-white font-bold border-indigo-400' : 'bg-slate-950 text-slate-400 border-slate-800'"
+            class="px-4 py-2 rounded-lg border transition-all flex items-center space-x-2"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>ADMIN (Full Read/Write/Delete)</span>
+          </button>
+          <button
+            type="button"
+            (click)="toggleRole('VIEWER')"
+            [ngClass]="currentRole() === 'VIEWER' ? 'bg-slate-700 text-white font-bold border-slate-600' : 'bg-slate-950 text-slate-400 border-slate-800'"
+            class="px-4 py-2 rounded-lg border transition-all flex items-center space-x-2"
+          >
+            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span>VIEWER (Read-Only)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Audit Logs & System Health (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      <!-- System Architecture & Health -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-3">
+        <h2 class="text-sm font-semibold text-white border-b border-slate-800 pb-2">Environment Health</h2>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between items-center text-slate-400">
+            <span>FinPulse Backend API:</span>
+            <span class="font-mono text-emerald-400 font-bold">PORT 5000 (HEALTHY)</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-400">
+            <span>Database Instance:</span>
+            <span class="font-mono text-emerald-400 font-bold">MySQL 8.0 (PORT 3308)</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-400">
+            <span>Angular Frontend:</span>
+            <span class="font-mono text-emerald-400 font-bold">PORT 4200 (READY)</span>
+          </div>
+          <div class="flex justify-between items-center text-slate-400">
+            <span>Version:</span>
+            <span class="font-mono text-slate-300">v2.4.0-enterprise</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Logs -->
+      <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-3">
+        <h2 class="text-sm font-semibold text-white border-b border-slate-800 pb-2 flex items-center justify-between">
+          <span>Security Audit Trail</span>
+          <span class="text-[10px] text-slate-500 font-mono">Immutable</span>
+        </h2>
+        <div class="space-y-3 text-xs">
+          <div
+            *ngFor="let log of auditLogs()"
+            class="p-2.5 rounded bg-slate-950/80 border border-slate-800/80 space-y-1"
+          >
+            <div class="flex justify-between items-center">
+              <span class="font-mono text-[10px] font-bold text-emerald-400">{{ log.action }}</span>
+              <span class="text-[10px] text-slate-500 font-mono">{{ log.created_at }}</span>
+            </div>
+            <p class="text-slate-300 text-xs">{{ log.details }}</p>
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>{{ log.user_email }}</span>
+              <span>IP: {{ log.ip_address }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,265 @@
+<div class="space-y-6">
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div>
+      <div class="flex items-center space-x-2">
+        <h1 class="text-2xl font-bold tracking-tight text-white">Financial Forecasting Sandbox</h1>
+        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          Monte Carlo Engine v2.4
+        </span>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">
+        Simulate forward 12-month organizational runway, burn multiples, and scenario impacts with live parameter tweaking.
+      </p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button
+        (click)="applyPreset(presets[1])"
+        class="px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-xs font-medium text-slate-300 transition-colors"
+      >
+        Reset Baseline
+      </button>
+      <button
+        class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-xs transition-colors flex items-center space-x-1.5"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+        </svg>
+        <span>Save Forecast Snapshot</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scenario Presets Bar -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div
+      *ngFor="let p of presets"
+      (click)="applyPreset(p)"
+      [ngClass]="activePreset() === p.id ? 'border-emerald-500/50 bg-slate-800/90 ring-1 ring-emerald-500/40' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'"
+      class="p-3.5 rounded-lg border cursor-pointer transition-all duration-200"
+    >
+      <div class="flex items-center justify-between mb-1.5">
+        <h3 class="text-sm font-semibold text-white">{{ p.name }}</h3>
+        <span [class]="'text-[10px] font-medium px-2 py-0.5 rounded border ' + p.badgeColor">
+          {{ p.badge }}
+        </span>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">{{ p.description }}</p>
+    </div>
+  </div>
+
+  <!-- Live Projected KPI Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Projected Revenue -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-400">Projected Run-rate Revenue</span>
+        <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          {{ revGrowth() >= 0 ? '+' : '' }}{{ revGrowth() }}%
+        </span>
+      </div>
+      <div class="mt-2 text-2xl font-bold font-mono text-white">
+        {{ api.formatCurrency(projectedRevenue()) }}
+      </div>
+      <div class="text-xs text-slate-500 mt-1">
+        Base: {{ api.formatCurrency(baseRevenue()) }}/mo
+      </div>
+    </div>
+
+    <!-- Projected Spend -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-400">Projected Monthly Spend</span>
+        <span class="text-xs font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          OPEX + CAPEX
+        </span>
+      </div>
+      <div class="mt-2 text-2xl font-bold font-mono text-white">
+        {{ api.formatCurrency(projectedTotalSpend()) }}
+      </div>
+      <div class="text-xs text-slate-500 mt-1">
+        Payroll: {{ api.formatCurrency(projectedPayroll()) }}
+      </div>
+    </div>
+
+    <!-- Projected Net Cash Flow -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-400">Projected Net Cash Flow</span>
+        <span
+          [ngClass]="projectedNetProfit() >= 0 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'"
+          class="text-xs font-mono px-2 py-0.5 rounded border"
+        >
+          Margin: {{ projectedMargin().toFixed(1) }}%
+        </span>
+      </div>
+      <div
+        [ngClass]="projectedNetProfit() >= 0 ? 'text-emerald-400' : 'text-rose-400'"
+        class="mt-2 text-2xl font-bold font-mono"
+      >
+        {{ api.formatCurrency(projectedNetProfit()) }}
+      </div>
+      <div class="text-xs text-slate-500 mt-1">
+        {{ projectedNetProfit() >= 0 ? 'Cash flow positive monthly surplus' : 'Net monthly burn' }}
+      </div>
+    </div>
+
+    <!-- Projected Cash Runway -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-400">Projected Cash Runway</span>
+        <span class="text-xs font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          Cash: {{ api.formatCurrency(cashReserves()) }}
+        </span>
+      </div>
+      <div class="mt-2 text-2xl font-bold font-mono text-emerald-400 flex items-baseline space-x-1.5">
+        <span>{{ projectedRunwayMonths() >= 999 ? 'Infinite' : projectedRunwayMonths() }}</span>
+        <span *ngIf="projectedRunwayMonths() < 999" class="text-sm font-normal text-slate-400">months</span>
+      </div>
+      <div class="text-xs text-slate-500 mt-1">
+        {{ projectedRunwayMonths() >= 999 ? 'Sustained by profitable operating cash flow' : 'Zero-cash date projected in ' + projectedRunwayMonths() + ' mos' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Controls + Chart Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- 4 Range Sliders Box (4 cols) -->
+    <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-sm font-semibold text-white flex items-center space-x-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+          <span>Sensitivity Parameters</span>
+        </h2>
+        <span class="text-[11px] text-slate-500 font-mono">Real-time</span>
+      </div>
+
+      <!-- Slider 1: Revenue Growth -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <label class="text-slate-300 font-medium">Revenue Growth YoY</label>
+          <span class="font-mono font-bold text-emerald-400">{{ revGrowth() >= 0 ? '+' : '' }}{{ revGrowth() }}%</span>
+        </div>
+        <input
+          type="range"
+          min="-20"
+          max="50"
+          step="1"
+          [ngModel]="revGrowth()"
+          (ngModelChange)="revGrowth.set($event)"
+          class="w-full accent-emerald-500 cursor-pointer bg-slate-800 rounded h-1.5"
+        />
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>-20% (Contraction)</span>
+          <span>0%</span>
+          <span>+50% (Hypergrowth)</span>
+        </div>
+      </div>
+
+      <!-- Slider 2: Headcount / Payroll -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <label class="text-slate-300 font-medium">Payroll & Headcount Delta</label>
+          <span class="font-mono font-bold text-indigo-400">{{ payrollAdj() >= 0 ? '+' : '' }}{{ payrollAdj() }}%</span>
+        </div>
+        <input
+          type="range"
+          min="-20"
+          max="30"
+          step="1"
+          [ngModel]="payrollAdj()"
+          (ngModelChange)="payrollAdj.set($event)"
+          class="w-full accent-indigo-500 cursor-pointer bg-slate-800 rounded h-1.5"
+        />
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>-20% (Reduction)</span>
+          <span>0%</span>
+          <span>+30% (Aggressive Hiring)</span>
+        </div>
+      </div>
+
+      <!-- Slider 3: CapEx Investments -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <label class="text-slate-300 font-medium">CapEx & Infra Expansion</label>
+          <span class="font-mono font-bold text-amber-400">{{ capexScale() >= 0 ? '+' : '' }}{{ capexScale() }}%</span>
+        </div>
+        <input
+          type="range"
+          min="-50"
+          max="100"
+          step="5"
+          [ngModel]="capexScale()"
+          (ngModelChange)="capexScale.set($event)"
+          class="w-full accent-amber-500 cursor-pointer bg-slate-800 rounded h-1.5"
+        />
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>-50% (Freeze)</span>
+          <span>Baseline</span>
+          <span>+100% (Double Infra)</span>
+        </div>
+      </div>
+
+      <!-- Slider 4: Overhead Inflation -->
+      <div class="space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <label class="text-slate-300 font-medium">Overhead / SG&A Inflation</label>
+          <span class="font-mono font-bold text-rose-400">+{{ overheadInflation() }}%</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="20"
+          step="1"
+          [ngModel]="overheadInflation()"
+          (ngModelChange)="overheadInflation.set($event)"
+          class="w-full accent-rose-500 cursor-pointer bg-slate-800 rounded h-1.5"
+        />
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>0% Flat</span>
+          <span>+10% Expected</span>
+          <span>+20% High Inflation</span>
+        </div>
+      </div>
+
+      <!-- Quick Breakdown Table -->
+      <div class="pt-3 border-t border-slate-800 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-400">
+          <span>Procurement of Goods:</span>
+          <span class="font-mono text-slate-200">{{ api.formatCurrency(projectedGoods()) }}</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>CapEx Allocation:</span>
+          <span class="font-mono text-slate-200">{{ api.formatCurrency(projectedCapex()) }}</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Overhead / SG&A:</span>
+          <span class="font-mono text-slate-200">{{ api.formatCurrency(projectedOverhead()) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12-Month Projected Curve Chart (8 cols) -->
+    <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-lg p-5 flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-semibold text-white">12-Month Forward Trajectory Simulation</h2>
+          <p class="text-xs text-slate-400">Continuous forward compounding based on active sensitivity parameters</p>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span>Revenue</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 ml-2"></span>
+          <span>Spend</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 ml-2"></span>
+          <span>Net Profit</span>
+        </div>
+      </div>
+      <div class="relative flex-1 min-h-[360px] w-full">
+        <canvas #forecastChart></canvas>
+      </div>
+    </div>
+  </div>
+</div>

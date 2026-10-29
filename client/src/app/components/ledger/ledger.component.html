@@ -1,0 +1,293 @@
+<div class="space-y-6">
+  <!-- Header Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div>
+      <div class="flex items-center space-x-2">
+        <h1 class="text-2xl font-bold tracking-tight text-white">General Financial Ledger</h1>
+        <span class="px-2 py-0.5 text-xs font-mono font-medium rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+          {{ filteredRecords().length }} records
+        </span>
+      </div>
+      <p class="text-sm text-slate-400 mt-1">
+        Comprehensive double-entry statement history, monthly variances, and auditable line-item revisions.
+      </p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a
+        href="http://localhost:5000/api/v1/reports/csv"
+        target="_blank"
+        class="px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-xs font-medium text-slate-300 transition-colors flex items-center space-x-1.5"
+      >
+        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <span>Export CSV</span>
+      </a>
+      <a
+        href="http://localhost:5000/api/v1/reports/pdf"
+        target="_blank"
+        class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-xs transition-colors flex items-center space-x-1.5"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+        <span>Download PDF</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters & Search Toolbar -->
+  <div class="bg-slate-900 border border-slate-800 rounded-lg p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Filter Tabs -->
+    <div class="flex items-center space-x-1.5 bg-slate-950/60 p-1 rounded-md border border-slate-800">
+      <button
+        (click)="statusFilter.set('all')"
+        [ngClass]="statusFilter() === 'all' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'"
+        class="px-3 py-1 text-xs rounded transition-colors"
+      >
+        All Periods
+      </button>
+      <button
+        (click)="statusFilter.set('profitable')"
+        [ngClass]="statusFilter() === 'profitable' ? 'bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200'"
+        class="px-3 py-1 text-xs rounded transition-colors"
+      >
+        Profitable Only
+      </button>
+      <button
+        (click)="statusFilter.set('deficit')"
+        [ngClass]="statusFilter() === 'deficit' ? 'bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30' : 'text-slate-400 hover:text-slate-200'"
+        class="px-3 py-1 text-xs rounded transition-colors"
+      >
+        Deficit / Burn
+      </button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="relative w-full md:w-72">
+      <input
+        type="text"
+        placeholder="Filter by period or notes..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+      />
+      <svg class="w-4 h-4 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- High-Density Ledger Table -->
+  <div class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-950/80 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <th (click)="setSort('period')" class="py-3 px-4 cursor-pointer hover:text-white">
+              <div class="flex items-center space-x-1">
+                <span>Period</span>
+                <span *ngIf="sortColumn() === 'period'">{{ sortAsc() ? '▲' : '▼' }}</span>
+              </div>
+            </th>
+            <th (click)="setSort('revenue')" class="py-3 px-4 text-right cursor-pointer hover:text-white">
+              <div class="flex items-center justify-end space-x-1">
+                <span>Revenue</span>
+                <span *ngIf="sortColumn() === 'revenue'">{{ sortAsc() ? '▲' : '▼' }}</span>
+              </div>
+            </th>
+            <th (click)="setSort('payroll')" class="py-3 px-4 text-right cursor-pointer hover:text-white">Payroll</th>
+            <th (click)="setSort('procurement_goods')" class="py-3 px-4 text-right cursor-pointer hover:text-white">Goods</th>
+            <th (click)="setSort('capex_investments')" class="py-3 px-4 text-right cursor-pointer hover:text-white">CapEx</th>
+            <th (click)="setSort('overhead')" class="py-3 px-4 text-right cursor-pointer hover:text-white">Overhead</th>
+            <th (click)="setSort('total_expenses')" class="py-3 px-4 text-right cursor-pointer hover:text-white">Total Spend</th>
+            <th (click)="setSort('net_profit')" class="py-3 px-4 text-right cursor-pointer hover:text-white">
+              <div class="flex items-center justify-end space-x-1">
+                <span>Net Cash Flow</span>
+                <span *ngIf="sortColumn() === 'net_profit'">{{ sortAsc() ? '▲' : '▼' }}</span>
+              </div>
+            </th>
+            <th class="py-3 px-4 text-center">Status</th>
+            <th class="py-3 px-4 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-xs">
+          <tr
+            *ngFor="let r of filteredRecords()"
+            class="hover:bg-slate-800/40 transition-colors"
+          >
+            <!-- Period -->
+            <td class="py-3 px-4 font-mono font-medium text-white whitespace-nowrap">
+              {{ r.period }}
+            </td>
+
+            <!-- Revenue -->
+            <td class="py-3 px-4 font-mono text-right text-emerald-400 font-semibold whitespace-nowrap">
+              {{ api.formatCurrency(r.revenue) }}
+            </td>
+
+            <!-- Payroll -->
+            <td class="py-3 px-4 font-mono text-right text-indigo-300 whitespace-nowrap">
+              {{ api.formatCurrency(r.payroll) }}
+            </td>
+
+            <!-- Goods -->
+            <td class="py-3 px-4 font-mono text-right text-teal-300 whitespace-nowrap">
+              {{ api.formatCurrency(r.procurement_goods) }}
+            </td>
+
+            <!-- CapEx -->
+            <td class="py-3 px-4 font-mono text-right text-amber-300 whitespace-nowrap">
+              {{ api.formatCurrency(r.capex_investments) }}
+            </td>
+
+            <!-- Overhead -->
+            <td class="py-3 px-4 font-mono text-right text-slate-400 whitespace-nowrap">
+              {{ api.formatCurrency(r.overhead) }}
+            </td>
+
+            <!-- Total Spend -->
+            <td class="py-3 px-4 font-mono text-right text-rose-400 font-medium whitespace-nowrap">
+              {{ api.formatCurrency(r.total_expenses) }}
+            </td>
+
+            <!-- Net Profit -->
+            <td
+              [ngClass]="asNumber(r.net_profit) >= 0 ? 'text-emerald-400' : 'text-rose-400'"
+              class="py-3 px-4 font-mono text-right font-bold whitespace-nowrap"
+            >
+              {{ api.formatCurrency(r.net_profit) }}
+            </td>
+
+            <!-- Status Pill -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <span
+                *ngIf="asNumber(r.net_profit) > 0"
+                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >
+                PROFITABLE
+              </span>
+              <span
+                *ngIf="asNumber(r.net_profit) === 0"
+                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20"
+              >
+                BREAK-EVEN
+              </span>
+              <span
+                *ngIf="asNumber(r.net_profit) < 0"
+                class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20"
+              >
+                DEFICIT
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center space-x-2">
+                <button
+                  (click)="openEditModal(r)"
+                  class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  title="Edit Record"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button
+                  (click)="deleteRecord(r.period)"
+                  class="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                  title="Delete Record"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredRecords().length === 0" class="py-12 text-center">
+      <p class="text-sm text-slate-500">No financial statement entries matched your query.</p>
+    </div>
+  </div>
+
+  <!-- Edit Record Modal -->
+  <div *ngIf="editingRecord()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-lg w-full max-w-xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white">Edit Record: {{ editForm.period }}</h3>
+        <button (click)="closeEditModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Gross Revenue ({{ api.currencySymbol() }})</label>
+          <input
+            type="number"
+            [(ngModel)]="editForm.revenue"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Payroll & Wages ({{ api.currencySymbol() }})</label>
+          <input
+            type="number"
+            [(ngModel)]="editForm.payroll"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Procurement of Goods ({{ api.currencySymbol() }})</label>
+          <input
+            type="number"
+            [(ngModel)]="editForm.procurement_goods"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono"
+          />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">CapEx Investments ({{ api.currencySymbol() }})</label>
+          <input
+            type="number"
+            [(ngModel)]="editForm.capex_investments"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-slate-400 mb-1">Overhead & SG&A ({{ api.currencySymbol() }})</label>
+          <input
+            type="number"
+            [(ngModel)]="editForm.overhead"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono"
+          />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-slate-400 mb-1">Audit Notes / Commentary</label>
+          <textarea
+            [(ngModel)]="editForm.notes"
+            rows="2"
+            class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+        <button
+          (click)="closeEditModal()"
+          class="px-4 py-2 rounded text-xs text-slate-400 hover:text-white"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="saveEdit()"
+          class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,243 @@
+<div class="space-y-6 max-w-5xl mx-auto">
+  
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+        Monthly Financial Reconciliation Wizard
+        <span class="text-xs font-mono font-medium px-2 py-0.5 rounded bg-dark-slate border border-dark-border text-slate-300">
+          5-Step Flow
+        </span>
+      </h1>
+      <p class="text-xs text-slate-400 mt-1">
+        Input verified revenue and categorized operational costs with live margin preview and bulk CSV ingestion.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        (click)="downloadSampleCsv()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-slate hover:bg-slate-700/80 border border-dark-border text-slate-300 text-xs font-mono transition-all">
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        <span>Sample CSV</span>
+      </button>
+
+      <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-slate hover:bg-slate-700/80 border border-dark-border text-stitch-emerald text-xs font-mono transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/>
+        </svg>
+        <span>Bulk CSV Upload</span>
+        <input type="file" accept=".csv" (change)="handleCsvUpload($event)" class="hidden" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Wizard Step Indicator -->
+  <div class="bg-dark-slate border border-dark-border rounded-lg p-3 shadow-card">
+    <div class="grid grid-cols-5 gap-2 text-center text-xs font-mono">
+      <div [ngClass]="currentStep === 1 ? 'bg-stitch-emerald text-slate-950 font-bold' : 'text-slate-400'" class="p-2 rounded transition-all">1. Period</div>
+      <div [ngClass]="currentStep === 2 ? 'bg-stitch-emerald text-slate-950 font-bold' : 'text-slate-400'" class="p-2 rounded transition-all">2. Revenue</div>
+      <div [ngClass]="currentStep === 3 ? 'bg-stitch-emerald text-slate-950 font-bold' : 'text-slate-400'" class="p-2 rounded transition-all">3. Payroll</div>
+      <div [ngClass]="currentStep === 4 ? 'bg-stitch-emerald text-slate-950 font-bold' : 'text-slate-400'" class="p-2 rounded transition-all">4. Procurement</div>
+      <div [ngClass]="currentStep === 5 ? 'bg-stitch-emerald text-slate-950 font-bold' : 'text-slate-400'" class="p-2 rounded transition-all">5. CapEx & Overhead</div>
+    </div>
+  </div>
+
+  <!-- Main Wizard Card & Preview Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left: Step Inputs (7 cols) -->
+    <div class="lg:col-span-7 bg-dark-slate border border-dark-border rounded-lg p-6 shadow-card space-y-6">
+      
+      <!-- Step 1: Period Selection -->
+      <div *ngIf="currentStep === 1" class="space-y-4">
+        <h2 class="text-sm font-semibold text-white">Step 1: Select Fiscal Reconciliation Period</h2>
+        <p class="text-xs text-slate-400">Choose the monthly accounting period for audited figures.</p>
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Fiscal Period (YYYY-MM)</label>
+          <input 
+            type="month" 
+            [(ngModel)]="formValues.period"
+            class="w-full bg-deep-slate border border-dark-border rounded-lg px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+        </div>
+      </div>
+
+      <!-- Step 2: Revenue -->
+      <div *ngIf="currentStep === 2" class="space-y-4">
+        <h2 class="text-sm font-semibold text-white">Step 2: Total Recognized Revenue</h2>
+        <p class="text-xs text-slate-400">Net revenue recognized from subscriptions, enterprise contracts, and usage.</p>
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Total Recognized Revenue ({{ api.currencySymbol() }})</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-400 font-mono text-xs">{{ api.currencySymbol() }}</span>
+            <input 
+              type="number" 
+              [(ngModel)]="formValues.total_revenue"
+              class="w-full bg-deep-slate border border-dark-border rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Payroll -->
+      <div *ngIf="currentStep === 3" class="space-y-4">
+        <h2 class="text-sm font-semibold text-white">Step 3: Payroll & Personnel Expenses</h2>
+        <p class="text-xs text-slate-400">Salaries, contractor fees, employee health benefits, and payroll taxes.</p>
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Payroll Total ({{ api.currencySymbol() }})</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-400 font-mono text-xs">{{ api.currencySymbol() }}</span>
+            <input 
+              type="number" 
+              [(ngModel)]="formValues.payroll_expenses"
+              class="w-full bg-deep-slate border border-dark-border rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Goods Procurement -->
+      <div *ngIf="currentStep === 4" class="space-y-4">
+        <h2 class="text-sm font-semibold text-white">Step 4: Goods Procurement & COGS</h2>
+        <p class="text-xs text-slate-400">Server hosting infrastructure (AWS/GCP), API usage, data feeds, and direct vendor supplies.</p>
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Procurement / COGS ({{ api.currencySymbol() }})</label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-400 font-mono text-xs">{{ api.currencySymbol() }}</span>
+            <input 
+              type="number" 
+              [(ngModel)]="formValues.goods_procurement"
+              class="w-full bg-deep-slate border border-dark-border rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: CapEx & Overhead -->
+      <div *ngIf="currentStep === 5" class="space-y-4">
+        <h2 class="text-sm font-semibold text-white">Step 5: CapEx / Investments & Overhead</h2>
+        <p class="text-xs text-slate-400">Long-term equipment acquisitions, facility leases, insurance, legal, and software tooling.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-mono text-slate-300 mb-1">CapEx / Investments ({{ api.currencySymbol() }})</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 font-mono text-xs">{{ api.currencySymbol() }}</span>
+              <input 
+                type="number" 
+                [(ngModel)]="formValues.investments_capex"
+                class="w-full bg-deep-slate border border-dark-border rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-300 mb-1">Overhead & Misc ({{ api.currencySymbol() }})</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 font-mono text-xs">{{ api.currencySymbol() }}</span>
+              <input 
+                type="number" 
+                [(ngModel)]="formValues.overhead_misc"
+                class="w-full bg-deep-slate border border-dark-border rounded-lg pl-8 pr-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-stitch-emerald"/>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-300 mb-1">Audit Notes</label>
+          <textarea 
+            [(ngModel)]="formValues.notes"
+            rows="2"
+            class="w-full bg-deep-slate border border-dark-border rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-stitch-emerald"></textarea>
+        </div>
+      </div>
+
+      <!-- Navigation & Action Buttons -->
+      <div class="pt-4 border-t border-dark-border flex items-center justify-between">
+        <button 
+          *ngIf="currentStep > 1"
+          (click)="prevStep()"
+          class="px-4 py-2 rounded-lg bg-deep-slate border border-dark-border text-slate-300 text-xs font-mono hover:text-white transition-all">
+          ← Previous Step
+        </button>
+        <div *ngIf="currentStep === 1"></div>
+
+        <button 
+          *ngIf="currentStep < totalSteps"
+          (click)="nextStep()"
+          class="px-4 py-2 rounded-lg bg-stitch-emerald text-slate-950 font-bold text-xs shadow-glow-emerald hover:bg-emerald-400 transition-all">
+          Next Step →
+        </button>
+
+        <button 
+          *ngIf="currentStep === totalSteps"
+          (click)="submitMonthlyReport()"
+          [disabled]="isSubmitting"
+          class="px-5 py-2.5 rounded-lg bg-stitch-emerald text-slate-950 font-bold text-xs shadow-glow-emerald hover:bg-emerald-400 disabled:opacity-50 transition-all flex items-center gap-2">
+          <span>{{ isSubmitting ? 'Recording Entry...' : 'Commit Monthly Financial Report' }}</span>
+        </button>
+      </div>
+
+      <div *ngIf="submitSuccess" class="p-3 rounded-lg bg-stitch-emerald/10 border border-stitch-emerald/30 text-stitch-emerald text-xs font-mono">
+        ✓ Report recorded successfully in MySQL database! Redirecting to Dashboard...
+      </div>
+      <div *ngIf="submitError" class="p-3 rounded-lg bg-stitch-crimson/10 border border-stitch-crimson/30 text-stitch-crimson text-xs font-mono">
+        ✗ {{ submitError }}
+      </div>
+    </div>
+
+    <!-- Right: Live Instant Math Preview Card (5 cols) -->
+    <div class="lg:col-span-5 bg-dark-slate border border-dark-border rounded-lg p-6 shadow-card space-y-4">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h2 class="text-xs font-mono uppercase tracking-wider text-slate-400">Live Reconciliation Preview</h2>
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-stitch-emerald/15 text-stitch-emerald border border-stitch-emerald/30">
+          Instant Math
+        </span>
+      </div>
+
+      <div class="space-y-3 font-mono text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Total Recognized Revenue</span>
+          <span class="text-base font-bold text-stitch-emerald">{{ api.currencySymbol() }}{{ (formValues.total_revenue || 0) | number:'1.0-0' }}</span>
+        </div>
+
+        <div class="p-3 rounded-lg bg-deep-slate/80 border border-dark-border space-y-2">
+          <div class="flex items-center justify-between text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-category-payroll"></span>Payroll</span>
+            <span>{{ api.currencySymbol() }}{{ (formValues.payroll_expenses || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-category-procurement"></span>Procurement</span>
+            <span>{{ api.currencySymbol() }}{{ (formValues.goods_procurement || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-category-capex"></span>CapEx</span>
+            <span>{{ api.currencySymbol() }}{{ (formValues.investments_capex || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-category-overhead"></span>Overhead</span>
+            <span>{{ api.currencySymbol() }}{{ (formValues.overhead_misc || 0) | number:'1.0-0' }}</span>
+          </div>
+          <div class="pt-2 border-t border-dark-border flex items-center justify-between font-bold text-slate-200">
+            <span>Computed Total Spend</span>
+            <span class="text-stitch-crimson">{{ api.currencySymbol() }}{{ computedTotalExpenses | number:'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-deep-slate border border-dark-border flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase text-slate-400 block">Projected Net Operating Profit</span>
+            <span class="text-lg font-bold" [ngClass]="computedNetProfit >= 0 ? 'text-stitch-emerald' : 'text-stitch-crimson'">
+              {{ api.currencySymbol() }}{{ computedNetProfit | number:'1.0-0' }}
+            </span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] uppercase text-slate-400 block">Operating Margin</span>
+            <span class="text-sm font-bold font-mono px-2 py-0.5 rounded bg-dark-slate border border-dark-border"
+              [ngClass]="computedOperatingMargin >= 25 ? 'text-stitch-emerald' : 'text-amber-400'">
+              {{ computedOperatingMargin | number:'1.1-1' }}%
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

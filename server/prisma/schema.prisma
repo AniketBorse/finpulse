@@ -1,0 +1,70 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Organization {
+  id            String             @id @default(uuid()) @db.VarChar(36)
+  name          String             @db.VarChar(255)
+  industry      String             @db.VarChar(100)
+  currency_code String             @default("INR") @db.VarChar(10)
+  created_at    DateTime           @default(now()) @db.DateTime(3)
+  users         User[]
+  financials    MonthlyFinancial[]
+
+  @@map("Organizations")
+}
+
+model User {
+  id              String        @id @default(uuid()) @db.VarChar(36)
+  organization_id String        @db.VarChar(36)
+  email           String        @unique @db.VarChar(255)
+  password_hash   String        @db.VarChar(255)
+  role            Role          @default(ADMIN)
+  created_at      DateTime      @default(now()) @db.DateTime(3)
+  organization    Organization  @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  audit_logs      AuditLog[]
+
+  @@map("Users")
+}
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+model MonthlyFinancial {
+  id                String       @id @default(uuid()) @db.VarChar(36)
+  organization_id   String       @db.VarChar(36)
+  period            DateTime     @db.Date
+  total_revenue     Decimal      @db.Decimal(15, 2)
+  payroll_expenses  Decimal      @db.Decimal(15, 2)
+  goods_procurement Decimal      @db.Decimal(15, 2)
+  investments_capex Decimal      @db.Decimal(15, 2)
+  overhead_misc     Decimal      @db.Decimal(15, 2)
+  total_expenses    Decimal      @db.Decimal(15, 2)
+  net_profit        Decimal      @db.Decimal(15, 2)
+  operating_margin  Decimal      @db.Decimal(5, 2)
+  notes             String?      @db.Text
+  deleted_at        DateTime?    @db.DateTime(3)
+  created_at        DateTime     @default(now()) @db.DateTime(3)
+  organization      Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@unique([organization_id, period])
+  @@map("MonthlyFinancials")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  user_id    String   @db.VarChar(36)
+  action     String   @db.VarChar(255)
+  ip_address String?  @db.VarChar(45)
+  timestamp  DateTime @default(now()) @db.DateTime(3)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("AuditLogs")
+}
